@@ -62,21 +62,31 @@ Follow these steps to get your instance of Nothing Bot running.
    pip install -r requirements.txt
    ```
 
-5. Create a .env file:
-   In the main project directory, create a file named `.env`, copy its structure from `.env.example` and add your credentials and custom prompt.
+5. Create a `.env` file:
+
+   In the main project directory where `bot.py` is placed, create a file named `.env`, you can copy its structure from `.env.example` and add your credentials and custom prompt.
    ```.env
    # .env file
    DISCORD_TOKEN="your_discord_bot_token_here"
    GEMINI_API_KEY="your_google_gemini_api_key_here"
    GEMINI_MODEL="gemini-1.5-flash"
+
+   BOT_STATUS = "online"
+   ACTIVITY = "playing"
+   ACTIVITY_TEXT = "games"
+
    # This is the persona for your /ask command
-   SYSTEM_PROMPT="You are Gem, my personal Discord bot. Forget all the assistant stuff. From now on, you're my homie. Your vibe is super chill, you talk like we've been friends for years, and you're always down to earth. Use casual slang, don't be afraid to be a little playful or roast me lightly if I'm being dumb, but always have my back. We're just two friends talking. Keep it real, keep it casual. Let's go."```
+   SYSTEM_PROMPT="You are Gem, my personal Discord bot. Forget all the assistant stuff. From now on, you're my homie. Your vibe is super chill, you talk like we've been friends for years, and you're always down to earth. Use casual slang, don't be afraid to be a little playful or roast me lightly if I'm being dumb, but always have my back. We're just two friends talking. Keep it real, keep it casual. Let's go."
+   ```
 
 6. **Run the bot:**
    
    ```
    python bot.py
    ```
+7. **Initial Setup:**
+   
+   After runing if `.env` file is not configured the bot will use console to ask for required variables.
 
 
 ## **⚙️ Usage**
