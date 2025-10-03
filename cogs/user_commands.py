@@ -1,8 +1,10 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import os
+from collections import defaultdict
 from dotenv import load_dotenv
 load_dotenv()
 HISTORY_LIMIT = 20
@@ -43,21 +45,26 @@ Analyze the following text and generate the response based on these rules:
 class UserCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        try:
-            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        except Exception as e:
-            print(f"Error configuring Google AI: {e}")
-            print("Please make sure you have a valid GEMINI_API_KEY.")
-        
-        self.model = genai.GenerativeModel(os.getenv("GEMINI_MODEL"))
-        self.chat_histories = {}
+        self.google_client = genai.Client()
+        self.model = os.getenv("GEMINI_MODEL")
+        self.channel_chats = defaultdict(lambda: self.google_client.chats.create(model=self.model))
+
+    def get_config(self, search: bool = False):
+        grounding_tool = types.Tool(
+            google_search=types.GoogleSearch()
+        )
+        return types.GenerateContentConfig(system_instruction=os.getenv("SYSTEM_PROMPT"),thinking_config=types.ThinkingConfig(thinking_budget=0), tools=[grounding_tool] if search else None)
 
     @app_commands.command(name="define", description="Check spelling, grammar, and meaning of words")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     @app_commands.user_install()
     async def define(self, interaction:  discord.Interaction, word: str, ephemeral: bool = True):
         await interaction.response.defer(ephemeral=ephemeral)
-        response = self.model.generate_content(SENTENCE_INSTRUCT.format(text=word))
+        response = self.google_client.models.generate_content(
+            model= self.model,
+            content= SENTENCE_INSTRUCT.format(text=word),
+            config= self.get_config()
+        )
         await interaction.followup.send(f"{response.text}")
     
     @app_commands.command(name="explain", description="Check spelling, grammar, and meaning of sentences")
@@ -65,7 +72,11 @@ class UserCommands(commands.Cog):
     @app_commands.user_install()
     async def explain(self, interaction:  discord.Interaction, sentence: str, ephemeral: bool = True):
         await interaction.response.defer(ephemeral=ephemeral)
-        response = self.model.generate_content(SENTENCE_INSTRUCT.format(text=sentence))
+        response = self.google_client.models.generate_content(
+            model= self.model,
+            content= SENTENCE_INSTRUCT.format(text=sentence),
+            config=self.get_config()
+        )
         await interaction.followup.send(f"{response.text}")
         
 
@@ -73,24 +84,14 @@ class UserCommands(commands.Cog):
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     @app_commands.user_install()
     @app_commands.describe(prompt="What you want to ask Gemini.")
-    async def ask(self, interaction: discord.Interaction, prompt: str, temp: bool = False):
+    async def ask(self, interaction: discord.Interaction, prompt: str, temp: bool = False, search: bool = False):
         await interaction.response.defer(ephemeral=temp)
         
         try:
             channel_id = interaction.channel_id
-            user_history = self.chat_histories.get(channel_id, [])
-
-            if not user_history:
-                user_history = INITIAL_HISTORY.copy() 
-            
-            if len(user_history) > HISTORY_LIMIT:
-                user_history = user_history[:2] + user_history[-(HISTORY_LIMIT - 2):]
-            
-            chat_session = self.model.start_chat(history=user_history)
-            response = await chat_session.send_message_async(prompt)
-            answer = response.text.strip()
-
-            self.chat_histories[channel_id] = chat_session.history
+            chat = self.channel_chats[channel_id]
+            response = chat.send_message(prompt, config=self.get_config(search))
+            answer = response.text
 
         except Exception as e:
             answer = f"I ran into a little snag: {e} 😵‍💫"
@@ -98,6 +99,24 @@ class UserCommands(commands.Cog):
 
         await interaction.followup.send(f"> {prompt}\n\n{answer}")
 
+    @app_commands.command(name="search", description="Search using  Gemini!")
+    @app_commands.allowed_contexts(guilds= True, dms=True, private_channels=True)
+    @app_commands.user_install()
+    @app_commands.describe(text= "Query")
+    async def search(self, interaction: discord.Interaction, text: str, ephemeral: bool = True):
+        await interaction.response.defer(ephemeral=ephemeral)
+        grounding_tool = types.Tool(
+            google_search=types.GoogleSearch()
+        )
+        config = types.GenerateContentConfig(
+            tools=[grounding_tool]
+        )
+        response = self.google_client.models.generate_content(
+            model= self.model,
+            contents= text,
+            config=config,
+        )
+        await interaction.followup.send(f"{response.text}")
     @app_commands.command(name="say", description="Make your bot say anything")
     @app_commands.allowed_contexts(guilds= True, dms=True, private_channels=True)
     @app_commands.user_install()
