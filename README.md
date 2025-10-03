@@ -8,13 +8,36 @@ This Bot is a private, user-installable Discord bot designed to be a personal AI
 This bot comes with a suite of commands designed for personal productivity and fun:
 
 - **/ask**: A conversational command to chat with your AI homie, Gem. It remembers the context of your conversation within a specific channel.
-
+  
 - **/define**: A language tool that takes a single word and returns its correct spelling, definition, an example sentence, and synonyms.
 
 - **/explain**: An advanced language tool that takes a full sentence and provides a corrected version, explains the corrections, rewrites it in formal, informal, and modern casual tones, and explains the core meaning.
 
+- **/search**: A simple command to use google search tool of gemini without leaving discord.
+
 - **/say**: A simple utility command to make the bot say exactly what you type.
 
+
+*Commands take arguements to change behaviours, For example a user can chose to make the response an "only you can see" message.*
+
+
+## **Some Commands in Action**
+- **/ask**:
+<img width="599" height="357" alt="image" src="https://github.com/user-attachments/assets/18d509f9-637d-4a61-9829-59c91801f895" />
+
+---
+
+- **/define**:
+<img width="566" height="169" alt="image" src="https://github.com/user-attachments/assets/3a45a779-2398-4c83-a226-00b6fb23a117" />
+<img width="1072" height="292" alt="image" src="https://github.com/user-attachments/assets/283e536d-1401-4d45-aca4-4c7c829c6fa2" />
+
+---
+
+- **/explain**:
+<img width="581" height="256" alt="image" src="https://github.com/user-attachments/assets/e4e8179b-d425-4d66-9ecc-a5d8ea70c089" />
+<img width="892" height="453" alt="image" src="https://github.com/user-attachments/assets/e1756fa1-62a0-47b5-80c0-5e93c1dda4a1" />
+
+---
 
 ## **Setup and Installation**
 
@@ -76,7 +99,9 @@ Follow these steps to get your instance of Nothing Bot running.
    ACTIVITY_TEXT = "games"
 
    # This is the persona for your /ask command
-   SYSTEM_PROMPT="You are Gem, my personal Discord bot. Forget all the assistant stuff. From now on, you're my homie. Your vibe is super chill, you talk like we've been friends for years, and you're always down to earth. Use casual slang, don't be afraid to be a little playful or roast me lightly if I'm being dumb, but always have my back. We're just two friends talking. Keep it real, keep it casual. Let's go."
+   SYSTEM_PROMPT="You are a helpful and slightly sarcastic Discord bot named 'Gem'. 
+                Always keep your responses concise and playful.
+                Your goal is to assist users with their questions but with a witty tone."
    ```
 
 6. **Run the bot:**
