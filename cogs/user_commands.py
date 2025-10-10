@@ -37,10 +37,6 @@ Provide the following information in this exact format:
     * **Informal:** Relaxed and suitable for friends or family.
     * **Modern Casual:** Natural, modern, and non-awkward, as if used in a text message.
 * **Core Meaning:** A simple explanation of what the sentence means.
-
-Analyze the following text and generate the response based on these rules:
-
-**{text}**
 """
 class UserCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -49,11 +45,13 @@ class UserCommands(commands.Cog):
         self.model = os.getenv("GEMINI_MODEL")
         self.channel_chats = defaultdict(lambda: self.google_client.chats.create(model=self.model))
 
-    def get_config(self, search: bool = False):
+    @staticmethod
+    def get_config(search: bool= False, sentence: bool = False):
         grounding_tool = types.Tool(
             google_search=types.GoogleSearch()
         )
-        return types.GenerateContentConfig(system_instruction=os.getenv("SYSTEM_PROMPT"),thinking_config=types.ThinkingConfig(thinking_budget=0), tools=[grounding_tool] if search else None)
+        instruction = os.getenv("SYSTEM_PROMPT") if not sentence else SENTENCE_INSTRUCT
+        return types.GenerateContentConfig(system_instruction=instruction,thinking_config=types.ThinkingConfig(thinking_budget=0), tools=[grounding_tool] if search else None)
 
     @app_commands.command(name="define", description="Check spelling, grammar, and meaning of words")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -62,8 +60,8 @@ class UserCommands(commands.Cog):
         await interaction.response.defer(ephemeral=ephemeral)
         response = self.google_client.models.generate_content(
             model= self.model,
-            content= SENTENCE_INSTRUCT.format(text=word),
-            config= self.get_config()
+            contents= "Analyze the following text and generate the response based on these rules: " + word,
+            config= UserCommands.get_config(sentence=True)
         )
         await interaction.followup.send(f"{response.text}")
     
@@ -74,8 +72,8 @@ class UserCommands(commands.Cog):
         await interaction.response.defer(ephemeral=ephemeral)
         response = self.google_client.models.generate_content(
             model= self.model,
-            content= SENTENCE_INSTRUCT.format(text=sentence),
-            config=self.get_config()
+            contents= "Analyze the following text and generate the response based on these rules: " + sentence,
+            config= UserCommands.get_config(sentence=True)
         )
         await interaction.followup.send(f"{response.text}")
         
@@ -90,7 +88,7 @@ class UserCommands(commands.Cog):
         try:
             channel_id = interaction.channel_id
             chat = self.channel_chats[channel_id]
-            response = chat.send_message(prompt, config=self.get_config(search))
+            response = chat.send_message(prompt, config=UserCommands.get_config(search=search))
             answer = response.text
 
         except Exception as e:
